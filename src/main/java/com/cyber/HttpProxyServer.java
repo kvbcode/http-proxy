@@ -61,7 +61,9 @@ public class HttpProxyServer {
 
 
             if (HttpRequest.METHOD_CONNECT.equals(httpRequest.getMethod())) {
-                handleConnectMethod(httpRequest, in, out);
+                String response = "HTTP/1.1 404 Not Found\r\n\r\n";
+                in.skip(in.available());
+                //handleConnectMethod(httpRequest, in, out);
             } else {
                 handlePlainMethod(httpRequest, in, out);
             }
