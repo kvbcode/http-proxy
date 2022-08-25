@@ -1,1 +1,1 @@
-web: java -jar target/http-proxy-1.0-SNAPSHOT-jar-with-dependencies.jar
+web: java -agentlib:jdwp=transport=dt_socket,server=y,address=9090,suspend=n -jar target/http-proxy-1.0-SNAPSHOT-jar-with-dependencies.jar

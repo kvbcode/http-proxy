@@ -5,8 +5,10 @@ public class HttpRequestParser {
     public HttpRequest parse(String httpRequestLines) {
         HttpRequest httpRequest = new HttpRequest();
         String[] lines = httpRequestLines.split("\n");
+        if (lines.length == 0) return httpRequest;
 
         String[] connectionParts = lines[0].split(" ");
+        if (connectionParts.length < 3) return httpRequest;
 
         httpRequest.setMethod(connectionParts[0].trim());
         httpRequest.setPath(connectionParts[1].trim());
