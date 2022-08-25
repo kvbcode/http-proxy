@@ -3,14 +3,13 @@ package com.cyber.http;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Getter
 @Setter
 public class HttpRequest {
-    public static String METHOD_CONNECT = "CONNECT";
+    public static final String METHOD_CONNECT = "CONNECT";
 
     private String method;
     private String path;
@@ -23,11 +22,25 @@ public class HttpRequest {
     }
 
     public String getHost() {
-        if (METHOD_CONNECT.equals(method)) {
-            return path;
-        } else {
-            return headers.get("Host");
+        String hostWithPort = METHOD_CONNECT.equals(method)
+                ? path
+                : headers.getOrDefault("Host", "");
+        String[] hostParts = hostWithPort.split(":");
+        String host = hostParts[0];
+        return host;
+    }
+
+    public int getPort() {
+        String hostWithPort = METHOD_CONNECT.equals(method)
+                ? path
+                : headers.getOrDefault("Host", "");
+        String[] hostParts = hostWithPort.split(":");
+        int port = 80;
+
+        if (hostParts.length > 1) {
+            port = Integer.valueOf(hostParts[1]);
         }
+        return port;
     }
 
     public String toFullRequest() {
@@ -44,5 +57,11 @@ public class HttpRequest {
         sb.append(getBody());
 
         return sb.toString();
+    }
+
+    public boolean isEmpty() {
+        return method == null || "".equals(method) ||
+                path == null || "".equals(path) ||
+                httpVersion == null || "".equals(httpVersion);
     }
 }
