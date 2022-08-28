@@ -2,6 +2,7 @@ package com.cyber;
 
 import com.cyber.http.HttpRequest;
 import com.cyber.http.HttpRequestParser;
+import com.cyber.util.TimeOut;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 public class HttpProxyServer {
     protected static final int BACKLOG_LENGTH = 50;
@@ -52,7 +54,7 @@ public class HttpProxyServer {
             }
         }
     }
-    
+
     protected void onClientConnection(Socket socket) {
         try (InputStream in = socket.getInputStream();
              OutputStream out = socket.getOutputStream()
@@ -84,8 +86,20 @@ public class HttpProxyServer {
         }
     }
 
+    protected int waitForAvailableData(InputStream in, int timeOutSeconds) throws IOException {
+        TimeOut timeOut = TimeOut.fromSeconds(timeOutSeconds);
+        int available = 0;
+        while ((available = in.available()) == 0) {
+            LockSupport.parkNanos(1_000_000);
+            if (timeOut.isTimeout()) {
+                throw new SocketTimeoutException("can't get available data for " + timeOutSeconds + " seconds");
+            }
+        }
+        return available;
+    }
+
     protected HttpRequest readHttpRequest(InputStream in) throws IOException {
-        int available = in.available();
+        int available = waitForAvailableData(in, 30);
         byte[] buf = new byte[available];
         in.read(buf);
         String requestStr = new String(buf);
@@ -143,8 +157,6 @@ public class HttpProxyServer {
     protected boolean httpBasicAuth(HttpRequest httpRequest, InputStream in, OutputStream out) throws IOException {
         String authString = httpRequest.getHeaders().getOrDefault("Proxy-Authorization", "");
         String envAuthString = System.getenv("USER_AUTH");
-
-        System.out.flush();
 
         if (authString.isEmpty()) {
             String unauthorizedResponse = "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"CyberNet\"\r\n\r\n";
