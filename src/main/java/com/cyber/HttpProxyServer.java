@@ -156,10 +156,12 @@ public class HttpProxyServer {
 
     protected boolean httpBasicAuth(HttpRequest httpRequest, InputStream in, OutputStream out) throws IOException {
         String authString = httpRequest.getHeaders().getOrDefault("Proxy-Authorization", "");
-        String envAuthString = System.getenv("USER_AUTH");
+        String envAuthString = System.getenv("CLIENT_AUTH_TOKEN");
+
+        if (envAuthString==null) return true;
 
         if (authString.isEmpty()) {
-            String unauthorizedResponse = "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"CyberNet\"\r\n\r\n";
+            String unauthorizedResponse = "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"com.cyber.HttpProxy\"\r\n\r\n";
             out.write(unauthorizedResponse.getBytes());
             System.out.println("AUTH RESPONSE:");
             System.out.println(unauthorizedResponse);
